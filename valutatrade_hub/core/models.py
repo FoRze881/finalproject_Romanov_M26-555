@@ -1,9 +1,8 @@
 '''Реализация всех классов проекта'''
-import hashlib
 import math
 from datetime import datetime
 
-from valutatrade_hub.core import constants
+from valutatrade_hub.core import utils
 
 
 class User:
@@ -25,19 +24,13 @@ class User:
     def change_password(self, new_password: str):
         '''Изменяет пароль пользователя, хешируя новый пароль
         Если пароль не проходит проверки, то выкидывается ValueError'''
-        if len(new_password) < constants.MINIMAL_LEN_PASSWORD:
-            raise ValueError(
-                f'Пароль должен быть не короче ' 
-                f'{constants.MINIMAL_LEN_PASSWORD} символов'
-            )
-        data = (new_password + self._salt).encode()
-        self._hashed_password = hashlib.sha256(data).hexdigest()
+        utils.validate_password(new_password)            
+        self._hashed_password = utils.hash_password(new_password, self._salt)
 
     def verify_password(self, password: str):
         '''Проверяет, совпадает ли введённый пароль с сохранённым
         Возвращает True/False'''
-        data = (password + self._salt).encode()
-        return hashlib.sha256(data).hexdigest() == self._hashed_password
+        return utils.hash_password(password, self._salt) == self._hashed_password
 
     @property
     def user_id(self):
@@ -121,7 +114,7 @@ class Wallet:
         (тип данных и неотрицательность)'''
         self._check_amount(new_balance)
         if new_balance < 0:
-            raise ValueError(f'Баланс не может быть отрицательным')
+            raise ValueError('Баланс не может быть отрицательным')
         self._balance = new_balance
 
 
@@ -146,7 +139,7 @@ class Portfolio:
         '''Добавляет новый кошелек в портфель, если его еще нет
         Если есть, то выбрасывает ошибку ValueError'''
         norm_currency_code = self._check_currency(currency_code)
-        if norm_currency_code in self._wallets.keys():
+        if norm_currency_code in self._wallets:
             raise ValueError('Кошелек с такой валютой уже существует')
         self._wallets[norm_currency_code] = Wallet(norm_currency_code)
     
@@ -159,12 +152,12 @@ class Portfolio:
                           'EUR': 1.04,
                           'SOL': 84} # пока как заглушку, потом надо будет брать из JSON файла, который нам API будет возвращать 
         norm_base_currency = self._check_currency(base_currency)
-        if norm_base_currency not in exchange_rates.keys():
+        if norm_base_currency not in exchange_rates:
             raise ValueError('Обменного курса для такой валюты нет, к сожалению')
 
         portfolio = 0
         for currency, wallet in self._wallets.items():
-            if currency not in exchange_rates.keys():
+            if currency not in exchange_rates:
                 raise ValueError(f'К сожалению, обменного курса для {currency} сейчас нет')
             portfolio += wallet.balance * exchange_rates[currency] / exchange_rates[norm_base_currency]
 
@@ -173,7 +166,7 @@ class Portfolio:
     def get_wallet(self, currency_code):
         '''Возвращает Wallet по коду валюты'''
         norm_currency_code = self._check_currency(currency_code)
-        if norm_currency_code not in self._wallets.keys():
+        if norm_currency_code not in self._wallets:
             raise ValueError('Такой валюты нет в портфеле')
         return self._wallets[norm_currency_code]
         
