@@ -96,4 +96,14 @@ def show_portfolio(user: models.User, comands: list[str]):
 
     portfolio = models.Portfolio(user_portfolio['user_id'],
                                  wallets)
-    return portfolio.get_total_value(base_currency)
+    wallets_value = portfolio.get_wallets_value(base_currency)
+    result = []
+    result.append(f'Портфель пользователя: {user.username} (база {base_currency})')
+    porfolio_value = 0
+    for currency_code, wallet in wallets_value.items():
+        porfolio_value += wallet[1]
+        result.append(f'- {currency_code}: {wallet[0]:.2f} -> {wallet[1]:.2f} {base_currency}')
+    result.append('----------------------------------')
+    result.append(f'ИТОГО: {porfolio_value:,.2f} {base_currency}')
+    result = '\n'.join(result)
+    return result

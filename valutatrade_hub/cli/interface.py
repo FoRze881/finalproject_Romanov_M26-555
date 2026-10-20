@@ -77,7 +77,7 @@ def main():
                     continue
 
                 try:
-                    print(float(f'{usecases.show_portfolio(current_user, comand[1:]):.2f}'))
+                    print(usecases.show_portfolio(current_user, comand[1:]))
                 except ValueError as e:
                     print(e)
 

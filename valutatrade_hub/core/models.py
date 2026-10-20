@@ -2,7 +2,7 @@
 import math
 from datetime import datetime
 
-from valutatrade_hub.core import utils
+from valutatrade_hub.core import constants, utils
 
 
 class User:
@@ -103,6 +103,16 @@ class Wallet:
         '''Выводит информацию о балансе'''
         print(f'Валюта: "{self.currency_code}" - Количество: {self._balance}')
 
+    def get_wallet_value(self, base_currency = 'USD'):
+        '''Возвращает стоимость отдельного кошелька в портфеле в базовой валюте
+        Если что-то не так, то выбрасывает ValueError'''
+        rates = utils.load_json(constants.RATES_FILE)
+        full_currency = f'{self.currency_code}_{base_currency.upper().strip()}'
+        if full_currency not in rates:
+            raise ValueError(f'К сожалению, обменного курса {full_currency} сейчас нет')
+        value = self.balance * rates[full_currency]['rate']
+        return value
+
     @property
     def balance(self):
         '''Возвращает текущее значение баланса'''
@@ -133,7 +143,6 @@ class Portfolio:
         if currency.strip() == '':
             raise ValueError('Валюта не может быть пустой')
         return currency.upper().strip()
-        
 
     def add_currency(self, currency_code: str):
         '''Добавляет новый кошелек в портфель, если его еще нет
@@ -146,22 +155,23 @@ class Portfolio:
     def get_total_value(self, base_currency = 'USD'):
         '''Возвращает общую стоимость всех валют пользователя в указанной валюте
         По курсам, полученным из API
-        Если курса нет, то выбрасывает ValueError или TypeError'''
-        exchange_rates = {'USD': 1,
-                          'BTC': 80000,
-                          'EUR': 1.04,
-                          'SOL': 84} # пока как заглушку, потом надо будет брать из JSON файла, который нам API будет возвращать 
+        Если курса нет, то выбрасывает ValueError'''
+        portfolio_value = 0
         norm_base_currency = self._check_currency(base_currency)
-        if norm_base_currency not in exchange_rates:
-            raise ValueError('Обменного курса для такой валюты нет, к сожалению')
+        wallets_value = self.get_wallets_value(norm_base_currency)
+        for wallet in wallets_value.values():
+            portfolio_value += wallet[1]
+        return portfolio_value
 
-        portfolio = 0
-        for currency, wallet in self._wallets.items():
-            if currency not in exchange_rates:
-                raise ValueError(f'К сожалению, обменного курса для {currency} сейчас нет')
-            portfolio += wallet.balance * exchange_rates[currency] / exchange_rates[norm_base_currency]
+    def get_wallets_value(self, base_currency = 'USD'):
+        '''Собирает баланс каждого кошелька и возвращает словарь вида {код_валюты: [баланс, баланс в валюте}'''
+        wallets_value = {}
+        norm_base_currency = self._check_currency(base_currency)
+        for currency_code, wallet in self._wallets.items():
+            wallets_value[currency_code] = [wallet.balance, 
+                                            wallet.get_wallet_value(norm_base_currency)]
 
-        return portfolio
+        return wallets_value
 
     def get_wallet(self, currency_code):
         '''Возвращает Wallet по коду валюты'''
@@ -169,7 +179,6 @@ class Portfolio:
         if norm_currency_code not in self._wallets:
             raise ValueError('Такой валюты нет в портфеле')
         return self._wallets[norm_currency_code]
-        
 
     @property
     def user(self):
