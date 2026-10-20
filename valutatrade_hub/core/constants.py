@@ -10,4 +10,6 @@ PORTFOLIOS_FILE = os.path.join(DATA_DIR, 'portfolios.json')
 ESSENTIAL_ARGUMENTS = {
     'register': ('--username', '--password'),
     'login': ('--username', '--password'),
+    'buy': ('--currency', '--amount'),
+    'sell': ('--currency', '--amount'),
 }

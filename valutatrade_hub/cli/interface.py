@@ -26,7 +26,15 @@ def return_help():
            'Команда show-portfolio - показать все кошельки и '
            'итоговую стоимость в базовой валюте (USD по умолчанию)\n'
            '\tАргументы (необязательно)\n'
-           '\t\t--base <str> - базовая валюта конвертации\n\n')
+           '\t\t--base <str> - базовая валюта конвертации\n\n'
+           'Команда buy - купить валюту\n'
+           '\tОбязательные аргументы:\n'
+           '\t\t--currency <str> - код покупаемой валюты\n'
+           '\t\t--amount <float> - количество покупаемой валюты (в штуках, не в USD)\n\n'
+           'Команда sell - продать валюту\n'
+           '\tОбязательные аргументы:\n'
+           '\t\t--currency <str> - код продаваемой валюты\n'
+           '\t\t--amount <float> - количество продаваемой валюты (в штуках, не в USD)\n\n')
 
 def main():
     print(greetings())
@@ -82,6 +90,28 @@ def main():
                     print(e)
 
 
+            case 'buy':
+                if current_user is None:
+                    print('Сначала войдите в профиль.\n' \
+                    'Команда login --username <str> --password <str>')
+                    continue
+
+                try:
+                    print(usecases.buy(current_user, comand[1:]))
+                except ValueError as e:
+                    print(e)
+
+            case 'sell':
+                if current_user is None:
+                    print('Сначала войдите в профиль.\n' \
+                    'Команда login --username <str> --password <str>')
+                    continue
+
+                try:
+                    print(usecases.sell(current_user, comand[1:]))
+                except ValueError as e:
+                    print(e)
+            
             case _:
                 print('Не знаем такой команды. Если нужна помощь '
                       'то можно вызвать help')

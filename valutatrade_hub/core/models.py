@@ -134,7 +134,7 @@ class Portfolio:
         self._wallets = wallets
 
     @staticmethod
-    def _check_currency(currency):
+    def check_currency(currency):
         '''Проверяет тип currency и возвращает нормализованное значение, 
         если что-то не так, то выбрасывает 
         TypeError или ValueError'''
@@ -147,7 +147,7 @@ class Portfolio:
     def add_currency(self, currency_code: str):
         '''Добавляет новый кошелек в портфель, если его еще нет
         Если есть, то выбрасывает ошибку ValueError'''
-        norm_currency_code = self._check_currency(currency_code)
+        norm_currency_code = self.check_currency(currency_code)
         if norm_currency_code in self._wallets:
             raise ValueError('Кошелек с такой валютой уже существует')
         self._wallets[norm_currency_code] = Wallet(norm_currency_code)
@@ -157,7 +157,7 @@ class Portfolio:
         По курсам, полученным из API
         Если курса нет, то выбрасывает ValueError'''
         portfolio_value = 0
-        norm_base_currency = self._check_currency(base_currency)
+        norm_base_currency = self.check_currency(base_currency)
         wallets_value = self.get_wallets_value(norm_base_currency)
         for wallet in wallets_value.values():
             portfolio_value += wallet[1]
@@ -166,7 +166,7 @@ class Portfolio:
     def get_wallets_value(self, base_currency = 'USD'):
         '''Собирает баланс каждого кошелька и возвращает словарь вида {код_валюты: [баланс, баланс в валюте}'''
         wallets_value = {}
-        norm_base_currency = self._check_currency(base_currency)
+        norm_base_currency = self.check_currency(base_currency)
         for currency_code, wallet in self._wallets.items():
             wallets_value[currency_code] = [wallet.balance, 
                                             wallet.get_wallet_value(norm_base_currency)]
@@ -175,7 +175,7 @@ class Portfolio:
 
     def get_wallet(self, currency_code):
         '''Возвращает Wallet по коду валюты'''
-        norm_currency_code = self._check_currency(currency_code)
+        norm_currency_code = self.check_currency(currency_code)
         if norm_currency_code not in self._wallets:
             raise ValueError('Такой валюты нет в портфеле')
         return self._wallets[norm_currency_code]
