@@ -34,7 +34,11 @@ def return_help():
            'Команда sell - продать валюту\n'
            '\tОбязательные аргументы:\n'
            '\t\t--currency <str> - код продаваемой валюты\n'
-           '\t\t--amount <float> - количество продаваемой валюты (в штуках, не в USD)\n\n')
+           '\t\t--amount <float> - количество продаваемой валюты (в штуках, не в USD)\n\n'
+           'Команда get-rate - получить текущий курс одной валюты к другой\n'
+           '\tОбязательный аргументы:\n'
+           '\t\t--from <str> - исходная валюта\n'
+           '\t\t--to <str> - целевая валюта\n')
 
 def main():
     print(greetings())
@@ -109,6 +113,12 @@ def main():
 
                 try:
                     print(usecases.sell(current_user, comand[1:]))
+                except ValueError as e:
+                    print(e)
+
+            case 'get-rate':
+                try:
+                    print(usecases.get_rate(comand[1:]))
                 except ValueError as e:
                     print(e)
             

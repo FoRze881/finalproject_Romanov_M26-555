@@ -2,7 +2,7 @@
 
 import json
 import secrets
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from valutatrade_hub.core import constants, models, utils
 
@@ -231,5 +231,50 @@ def sell(user: models.User, comands: list[str]):
     if rate_value is not None:
         wallet_in.deposit(rate_value * amount)
     save_user_portfolio(portfolio)
+    result = '\n'.join(result)
+    return result
+
+def get_rate(comands: list[str]):
+    '''Возвращает обменный курс 
+    Если что-то не так, то выбрасывает ValueError'''
+    comands = utils.parse_comand(comands)
+    check_essential_arguments('get-rate',
+                              constants.ESSENTIAL_ARGUMENTS.get('get-rate'),
+                              comands)
+    from_comand, to_comand = comands.get('--from').upper(), comands.get('--to').upper()
+    if not from_comand.strip() or not to_comand.strip():
+        raise ValueError('Команды не могут быть пустыми')
+    from_comand, to_comand = from_comand.strip(), to_comand.strip()
+    full_currency = f'{from_comand}_{to_comand}'
+    rates = utils.load_json(constants.RATES_FILE)
+    result = []
+    if (datetime.now() - datetime.fromisoformat(rates['last_refresh'])) > \
+        timedelta(minutes=constants.REFRESH_RATES):
+        pass # Просим парсер обновить данные в нашем файле. Пока что у нас нет парсера
+    if (datetime.now() - datetime.fromisoformat(rates['last_refresh'])) <= \
+        timedelta(minutes=constants.REFRESH_RATES):
+        if full_currency in rates:
+            update_date = f'{datetime.fromisoformat(rates[full_currency]['updated_at']):%Y-%m-%d %H:%M:%S}'
+            result.append(f'Курс {from_comand}/{to_comand}: {rates[full_currency]['rate']} '
+                          f'(обновлено {update_date})\n'
+                          f'Обратный курс {to_comand}/{from_comand}: {1/rates[full_currency]['rate']}')
+        else:
+            result.append(f'Курс {from_comand}/{to_comand} недоступен. '
+                          'Повторите попытку позже')
+
+        result = '\n'.join(result)
+        return result
+    
+    if full_currency in rates:
+        update_date = f'{datetime.fromisoformat(rates[full_currency]['updated_at']):%Y-%m-%d %H:%M:%S}'
+        result.append(f'К сожалению, актуального курса нет (который был бы не '
+                      f'старше {constants.REFRESH_RATES} минут)\n'
+                      f'Вот последний имеющийся курс {from_comand}/{to_comand}: '
+                      f'{rates[full_currency]['rate']} (обновлено '
+                      f'{update_date})\n'
+                      f'Обратный курс {to_comand}/{from_comand}: {1/rates[full_currency]['rate']}')
+    else:
+        result.append(f'Курс {from_comand}/{to_comand} недоступен. '
+                    'Повторите попытку позже')
     result = '\n'.join(result)
     return result

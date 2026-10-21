@@ -7,9 +7,11 @@ DATA_DIR = Path(__file__).resolve().parents[2] / 'data'
 USERS_FILE = os.path.join(DATA_DIR, 'users.json')
 RATES_FILE = os.path.join(DATA_DIR, 'rates.json')
 PORTFOLIOS_FILE = os.path.join(DATA_DIR, 'portfolios.json')
+REFRESH_RATES = 5
 ESSENTIAL_ARGUMENTS = {
     'register': ('--username', '--password'),
     'login': ('--username', '--password'),
     'buy': ('--currency', '--amount'),
     'sell': ('--currency', '--amount'),
+    'get-rate': ('--from', '--to'),
 }
