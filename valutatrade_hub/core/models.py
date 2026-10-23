@@ -2,7 +2,7 @@
 import math
 from datetime import datetime
 
-from valutatrade_hub.core import constants, utils
+from valutatrade_hub.core import constants, exceptions, utils
 
 
 class User:
@@ -96,7 +96,9 @@ class Wallet:
         if amount <= 0:
             raise ValueError('Сумма должна быть больше 0')
         if amount > self._balance:
-            raise ValueError('Недостаточно средств')
+            raise exceptions.InsufficientFundsError(self._balance, 
+                                                    self.currency_code,
+                                                    amount)
         self._balance -= amount
 
     def get_balance_info(self):
@@ -189,4 +191,5 @@ class Portfolio:
     def wallets(self):
         '''Возвращает копию словаря кошельков'''
         return dict(self._wallets)
+
     

@@ -4,7 +4,7 @@ import json
 import secrets
 from datetime import datetime, timedelta
 
-from valutatrade_hub.core import constants, models, utils
+from valutatrade_hub.core import constants, currencies, models, utils
 
 
 def load_user_portfolio(user_id):
@@ -117,7 +117,7 @@ def show_portfolio(user: models.User, comands: list[str]):
     Если валюты нет, то возвращает ValueError'''
 
     comands = utils.parse_comand(comands)
-    base_currency = comands.get('--base', 'USD').upper().strip()
+    base_currency = currencies.get_currency(comands.get('--base', 'USD')).code
     portfolio = load_user_portfolio(user.user_id)
     if not portfolio.wallets:
         raise ValueError('У Вас пока нет кошельков. Давайте создадим?')
@@ -141,7 +141,7 @@ def buy(user: models.User, comands: list[str]):
     check_essential_arguments('buy', 
                               constants.ESSENTIAL_ARGUMENTS.get('buy'),
                               comands)
-    currency_code = comands.get('--currency').upper().strip()
+    currency_code = currencies.get_currency(comands.get('--currency')).code
     amount = None
     try:
         amount = float(comands.get('--amount'))
@@ -186,7 +186,7 @@ def sell(user: models.User, comands: list[str]):
     check_essential_arguments('sell',
                               constants.ESSENTIAL_ARGUMENTS.get('sell'),
                               comands)
-    currency_code = comands.get('--currency').upper().strip()
+    currency_code = currencies.get_currency(comands.get('--currency')).code
     amount = None
     if currency_code == 'USD':
         raise ValueError('Нельзя продать USD за USD')
@@ -241,7 +241,8 @@ def get_rate(comands: list[str]):
     check_essential_arguments('get-rate',
                               constants.ESSENTIAL_ARGUMENTS.get('get-rate'),
                               comands)
-    from_comand, to_comand = comands.get('--from').upper(), comands.get('--to').upper()
+    from_comand = currencies.get_currency(comands.get('--from')).code
+    to_comand = currencies.get_currency(comands.get('--to')).code
     if not from_comand.strip() or not to_comand.strip():
         raise ValueError('Команды не могут быть пустыми')
     from_comand, to_comand = from_comand.strip(), to_comand.strip()

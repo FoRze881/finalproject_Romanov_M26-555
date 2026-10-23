@@ -1,7 +1,7 @@
 '''Клиентский CLI. единственная точка входа'''
 import shlex
 
-from valutatrade_hub.core import usecases
+from valutatrade_hub.core import exceptions, usecases
 
 
 def greetings(user_info=None):
@@ -90,7 +90,11 @@ def main():
 
                 try:
                     print(usecases.show_portfolio(current_user, comand[1:]))
+                except exceptions.CurrencyNotFoundError as e:
+                    print(e)
                 except ValueError as e:
+                    print(e)
+                except TypeError as e:
                     print(e)
 
 
@@ -102,7 +106,11 @@ def main():
 
                 try:
                     print(usecases.buy(current_user, comand[1:]))
+                except exceptions.CurrencyNotFoundError as e:
+                    print(e)
                 except ValueError as e:
+                    print(e)
+                except TypeError as e:
                     print(e)
 
             case 'sell':
@@ -113,13 +121,22 @@ def main():
 
                 try:
                     print(usecases.sell(current_user, comand[1:]))
+                except exceptions.CurrencyNotFoundError as e:
+                    print(e)
                 except ValueError as e:
+                    print(e)
+                except TypeError as e:
                     print(e)
 
             case 'get-rate':
                 try:
                     print(usecases.get_rate(comand[1:]))
+                except exceptions.CurrencyNotFoundError as e:
+                    print(e)
+                    print('Если нужна помощь, то можете уточнить команду с помошью help')
                 except ValueError as e:
+                    print(e)
+                except TypeError as e:
                     print(e)
             
             case _:
