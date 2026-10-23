@@ -1,27 +1,16 @@
 '''Утилиты для бизнес-логики (файла usercases.py)'''
 import hashlib
-import json
 
 from valutatrade_hub.core import constants
-from valutatrade_hub.infra.settings import settings
+from valutatrade_hub.infra.database import db
 
-
-def load_json(path):
-    '''Загружает данные из users.json и возвращает их
-    При ошибку кидает FileNotFoundError'''
-    try:
-        with open(path, 'r', encoding='utf-8') as f:
-            users = json.load(f)
-    except FileNotFoundError as e:
-        raise FileNotFoundError(f'Файл по адресу {path} не найден.') from e
-    return users
 
 def check_unique_users(user_name: str):
     '''Принимает список user'ов, выбрасывает ValueError, если есть ошибка'''
     user_name = user_name.strip()
     if not user_name:
         raise ValueError('Имя пользователя не может быть пустым')
-    users = load_json(settings.get('users_file'))
+    users = db.read('users')
     usernames = []
     for user in users:
         usernames.append(user.get('username'))
@@ -30,7 +19,7 @@ def check_unique_users(user_name: str):
 
 def generate_user_id():
     '''Возвращает новый user_id (последний id из существующих + 1)'''
-    users = load_json(settings.get('users_file'))
+    users = db.read('users')
     if not users: 
         return 1
     last_user_id = users[-1].get('user_id')
@@ -44,22 +33,20 @@ def hash_password(password: str, salt: str):
 def save_user_to_json(user_id: int, username: str, hashed_password: str, salt: str,
                       registration_date: str):
     '''Сохраняет нового пользователя в json файл'''
-    data = load_json(settings.get('users_file'))
+    data = db.read('users')
     data.append({'user_id': user_id,
             'username': username,
             'hashed_password': hashed_password,
             'salt': salt,
             'registration_date': registration_date})
-    with open(settings.get('users_file'), 'w', encoding='utf-8') as f:
-        json.dump(data, f)
+    db.write('users', data)
 
 def create_portfoilio(user_id: int):
     '''Создает пустой словарь кошельков при регистрации нового пользователя'''
-    data = load_json(settings.get('portfolios_file'))
+    data = db.read('portfolios')
     data.append({'user_id': user_id,
             'wallets': {}})
-    with open(settings.get('portfolios_file'), 'w', encoding='utf-8') as f:
-        json.dump(data, f)
+    db.write('portfolios', data)
 
 def parse_comand(comands: list[str]):
     '''Парсит команду и возвращает словарь вида --команда: значение
