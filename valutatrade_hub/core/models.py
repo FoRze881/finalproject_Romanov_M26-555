@@ -2,7 +2,8 @@
 import math
 from datetime import datetime
 
-from valutatrade_hub.core import constants, exceptions, utils
+from valutatrade_hub.core import exceptions, utils
+from valutatrade_hub.infra.settings import settings
 
 
 class User:
@@ -108,7 +109,7 @@ class Wallet:
     def get_wallet_value(self, base_currency = 'USD'):
         '''Возвращает стоимость отдельного кошелька в портфеле в базовой валюте
         Если что-то не так, то выбрасывает ValueError'''
-        rates = utils.load_json(constants.RATES_FILE)
+        rates = utils.load_json(settings.get('rates_file'))
         full_currency = f'{self.currency_code}_{base_currency.upper().strip()}'
         if full_currency not in rates:
             raise ValueError(f'К сожалению, обменного курса {full_currency} сейчас нет')

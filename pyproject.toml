@@ -8,3 +8,6 @@ dependencies = [
     "prettytable>=3.18.0",
     "ruff>=0.17.0",
 ]
+[tool.valutatrade]
+rates_ttl_seconds = 300
+default_base_currency = "USD"
