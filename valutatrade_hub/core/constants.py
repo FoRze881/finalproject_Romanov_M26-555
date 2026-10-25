@@ -8,4 +8,3 @@ ESSENTIAL_ARGUMENTS = {
     'sell': ('--currency', '--amount'),
     'get-rate': ('--from', '--to'),
 }
-API_EXCHANGE_RATE = '491f2b9d0b9ae7b3a3fa04ea'

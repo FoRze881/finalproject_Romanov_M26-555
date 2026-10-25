@@ -1,0 +1,50 @@
+[
+  {
+    "id": "BTC_USD_2026-10-25T13:20:35Z",
+    "from_currency": "BTC",
+    "to_currency": "USD",
+    "rate": 80336.0,
+    "timestamp": "2026-10-25T13:20:35Z",
+    "source": "CoinGecko",
+    "meta": {
+      "status_code": 200,
+      "request_ms": 361
+    }
+  },
+  {
+    "id": "ETH_USD_2026-10-25T13:20:35Z",
+    "from_currency": "ETH",
+    "to_currency": "USD",
+    "rate": 2333.15,
+    "timestamp": "2026-10-25T13:20:35Z",
+    "source": "CoinGecko",
+    "meta": {
+      "status_code": 200,
+      "request_ms": 361
+    }
+  },
+  {
+    "id": "EUR_USD_2026-10-25T13:20:35Z",
+    "from_currency": "EUR",
+    "to_currency": "USD",
+    "rate": 1.1203226529240422,
+    "timestamp": "2026-10-25T13:20:35Z",
+    "source": "ExchangeRate-API",
+    "meta": {
+      "status_code": 200,
+      "request_ms": 265
+    }
+  },
+  {
+    "id": "RUB_USD_2026-10-25T13:20:35Z",
+    "from_currency": "RUB",
+    "to_currency": "USD",
+    "rate": 0.01232433205201361,
+    "timestamp": "2026-10-25T13:20:35Z",
+    "source": "ExchangeRate-API",
+    "meta": {
+      "status_code": 200,
+      "request_ms": 265
+    }
+  }
+]

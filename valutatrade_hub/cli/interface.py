@@ -2,6 +2,7 @@
 import shlex
 
 from valutatrade_hub.core import exceptions, usecases
+from valutatrade_hub.logging_config import setup_logging
 
 
 def greetings(user_info=None):
@@ -37,8 +38,15 @@ def return_help():
            '\t\t--amount <float> - количество продаваемой валюты (в штуках, не в USD)\n\n'
            'Команда get-rate - получить текущий курс одной валюты к другой\n'
            '\tОбязательный аргументы:\n'
-           '\t\t--from <str> - исходная валюта\n'
-           '\t\t--to <str> - целевая валюта\n')
+           '\t\t--to <str> - целевая валюта\n\n'
+           'Команда update-rates - немедленное обновление курсов валют\n'
+           '\tАргументы (необязательно)\n'
+           '\t\t--source <str> - откуда брать данные (coingecko или exchangerate)\n\n'
+           'Команда show-rates - показать курсы из локального кеша\n'
+           '\tАргументы (необязательно)\n'
+           '\t\t--currency <str> - только указанная валюта\n'
+           '\t\t--top <int> - N самых дорогих криптовалют\n'
+           '\t\t--base <str> - базовая валюта (USD по умолчанию)')
 
 def main():
     print(greetings())
@@ -134,9 +142,33 @@ def main():
                 except exceptions.CurrencyNotFoundError as e:
                     print(e)
                     print('Если нужна помощь, то можете уточнить команду с помошью help')
+                except exceptions.ApiRequestError as e:
+                    print(e)
+                    print("Кеш курсов устарел, а обновить его не удалось. "
+                          "Повторите позже или выполните 'update-rates'")
                 except ValueError as e:
                     print(e)
                 except TypeError as e:
+                    print(e)
+
+            case 'update-rates':
+                try:
+                    print(usecases.update_rates(comand[1:]))
+                except exceptions.ApiRequestError as e:
+                    print(e)
+                    print('Проверьте подключение к интернету и ключ API. '
+                          'Подробности в logs/parser.log')
+                except ValueError as e:
+                    print(e)
+
+            case 'show-rates':
+                try:
+                    print(usecases.show_rates(comand[1:]))
+                except exceptions.CurrencyNotFoundError as e:
+                    print(e)
+                except TypeError as e:
+                    print(e)
+                except ValueError as e:
                     print(e)
             
             case _:
@@ -145,5 +177,11 @@ def main():
 
 
 
-if __name__ == "__main__":
+def run() -> None:
+    '''Точка входа для команды trade_hub: сначала настройка логов, потом CLI'''
+    setup_logging()
     main()
+
+
+if __name__ == "__main__":
+    run()

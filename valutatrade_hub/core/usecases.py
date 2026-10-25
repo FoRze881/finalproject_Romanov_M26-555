@@ -7,6 +7,10 @@ from valutatrade_hub.core import constants, currencies, models, utils
 from valutatrade_hub.decorators import log_action
 from valutatrade_hub.infra.database import db
 from valutatrade_hub.infra.settings import settings
+from valutatrade_hub.parser_service.api_clients import create_clients
+from valutatrade_hub.parser_service.config import ParserConfig
+from valutatrade_hub.parser_service.storage import RatesStorage
+from valutatrade_hub.parser_service.updater import RatesUpdater
 
 
 def load_user_portfolio(user_id):
@@ -254,7 +258,8 @@ def get_rate(comands: list[str]):
     result = []
     if (datetime.now() - datetime.fromisoformat(rates['last_refresh'])) > \
         timedelta(seconds=settings.get('rates_ttl_seconds')):
-        pass # Просим парсер обновить данные в нашем файле. Пока что у нас нет парсера
+        update_rates([]) 
+        rates = db.read('rates') 
     if (datetime.now() - datetime.fromisoformat(rates['last_refresh'])) <= \
         timedelta(seconds=settings.get('rates_ttl_seconds')):
         if full_currency in rates:
@@ -282,3 +287,73 @@ def get_rate(comands: list[str]):
                     'Повторите попытку позже')
     result = '\n'.join(result)
     return result
+
+def update_rates(comands: list[str]):
+    '''Немедленное обновление курсов (команда update-rates)'''
+    comands = utils.parse_comand(comands)
+    config = ParserConfig()
+    updater = RatesUpdater(
+        clients=create_clients(config, comands.get('--source')),
+        storage=RatesStorage(config.RATES_FILE_PATH, config.HISTORY_FILE_PATH),
+        base_currency=config.BASE_CURRENCY,
+    )
+    result = updater.run_update()
+    if result['errors']:
+        return ('Update completed with errors. Check logs/parser.log for details.\n'
+                f"Rates updated: {result['updated']}. Last refresh: {result['last_refresh']}")
+    return (f"Update successful. Total rates updated: {result['updated']}. "
+            f"Last refresh: {result['last_refresh']}")
+
+
+def show_rates(comands: list[str]):
+    '''Курсы из локального кеша с фильтрами --currency, --top, --base (команда show-rates)'''
+    comands = utils.parse_comand(comands)
+    rates = db.read('rates')
+    to_usd = {pair.split('_')[0]: data['rate'] for pair, data in rates.items()
+              if isinstance(data, dict) and pair.endswith('_USD') and pair != 'USD_USD'}
+    if not to_usd:
+        raise ValueError("Локальный кеш курсов пуст. "
+                         "Выполните 'update-rates', чтобы загрузить данные.")
+
+    base = currencies.get_currency(comands.get('--base', 'USD')).code
+    if base == 'USD':
+        base_rate = 1.0
+    elif base in to_usd:
+        base_rate = to_usd[base]
+    else:
+        raise ValueError(f"Курс для '{base}' не найден в кеше.")
+
+    rows = [(code, code_rate / base_rate) for code, code_rate in sorted(to_usd.items())
+            if code != base]
+
+    if '--currency' in comands:
+        code = comands['--currency'].strip().upper()
+        rows = [row for row in rows if row[0] == code]
+        if not rows:
+            raise ValueError(f"Курс для '{code}' не найден в кеше.")
+
+    if '--top' in comands:
+        try:
+            top = int(comands['--top'])
+        except ValueError:
+            raise ValueError('--top должен быть целым числом') from None
+        if top <= 0:
+            raise ValueError('--top должен быть больше 0')
+        crypto = [row for row in rows if _is_crypto(row[0])]
+        rows = sorted(crypto, key=lambda row: row[1], reverse=True)[:top]
+
+    lines = [f"Rates from cache (updated at {rates.get('last_refresh')}):"]
+    lines += [f'- {code}_{base}: {_format_rate(rate)}' for code, rate in rows]
+    return '\n'.join(lines)
+
+
+def _format_rate(rate: float) -> str:
+    '''Маленькие курсы — 8 знаков (0.00001685), остальные — 2 (59337.21)'''
+    return f'{rate:.8f}' if rate < 1 else f'{rate:.2f}'
+
+
+def _is_crypto(code: str) -> bool:
+    try:
+        return isinstance(currencies.get_currency(code), currencies.CryptoCurrency)
+    except ValueError:
+        return False
