@@ -14,6 +14,10 @@
 
 Поддерживаемые валюты: **USD, EUR, RUB, BTC, ETH**.
 
+## Демонстрация
+
+[![asciicast](https://asciinema.org/a/49tECYobMN09VsMg.svg)](https://asciinema.org/a/49tECYobMN09VsMg)
+
 ## Требования
 
 - Python 3.12+
